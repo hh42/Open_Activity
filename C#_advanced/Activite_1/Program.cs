@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ActiviteOrienteObjet
+namespace OPC_Activite_1
 {
     class Program
     {
@@ -89,46 +89,49 @@ namespace ActiviteOrienteObjet
         }
     }
 
-    /// <summary>
-    /// WIP class creation
-    /// </summary>
-
     public abstract class Personnage
     {
-        public abstract bool EstVivant {  }
-
-        abstract void Attaque()
-        {
-        }
-
-        abstract void SubitDegats()
-        {
-        }
-
-        protected int LanceLeDe()
+        public abstract bool EstVivant { get; }
+        public abstract void Attaque(Personnage ennemie);
+        public abstract void SubitDegats(int degats);
+        public int LanceLeDe()
         {
             return De.LanceLeDe();
         }
     }
 
     public class PersonnageAPointDeVie : Personnage
-    { 
-        public bool EstVivant
+    {
+        private int _PtsDeVies { get; set; }
+
+        public PersonnageAPointDeVie(int points)
         {
-            get { return PtsDeVies > 0; }
+            _PtsDeVies = points;
         }
 
-        protected int LanceLeDe(int valeur)
+        public override void Attaque(Personnage ennemie)
+        {
+            int lancePersonnage = LanceLeDe();
+            int lanceEnnemie = ennemie.LanceLeDe();
+            if (lancePersonnage >= lanceEnnemie)
+                ennemie.SubitDegats(this.LanceLeDe(25));
+        }
+
+        public override bool EstVivant
+        {
+            get { return _PtsDeVies > 0; }
+        }
+
+        public int LanceLeDe(int valeur)
         {
             return De.LanceLeDe(valeur);
         }
+
+        public override void SubitDegats(int degats)
+        {
+            _PtsDeVies -= degats;
+        }
     }
-
-
-
-    /// <summary>
-    /// WIP class creation
-    /// </summary>
 
     public static class De
     {
@@ -147,38 +150,35 @@ namespace ActiviteOrienteObjet
 
     public class MonstreFacile : Personnage
     {
-        private const int degats = 10;
-        public bool EstVivant { get; private set; }
+        private const int _atk = 10;
+        private bool _estVivant = true;
 
-        public MonstreFacile()
+        public override void Attaque(Personnage joueur)
         {
-            EstVivant = true;
-        }
-
-        public virtual void Attaque(Joueur joueur)
-        {
-            int lanceMonstre = base.LanceLeDe();
+            int lanceMonstre = LanceLeDe();
             int lanceJoueur = joueur.LanceLeDe();
             if (lanceMonstre > lanceJoueur)
-                joueur.SubitDegats(degats);
+            {
+                joueur.SubitDegats(_atk);
+            }
         }
 
-        public void SubitDegats()
+        public override bool EstVivant
         {
-            EstVivant = false;
+            get { return _estVivant; }
         }
-/*
-        public int LanceLeDe()
+
+        public override void SubitDegats(int degats)
         {
-            return De.LanceLeDe();
+            _estVivant = false;
         }
-  */  }
+    }
 
     public class MonstreDifficile : MonstreFacile
     {
         private const int degatsSort = 5;
 
-        public override void Attaque(Joueur joueur)
+        public override void Attaque(Personnage joueur)
         {
             base.Attaque(joueur);
             joueur.SubitDegats(SortMagique());
@@ -193,17 +193,19 @@ namespace ActiviteOrienteObjet
         }
     }
 
+
+    /*
+    ** 
+    */
+
+
     public class Joueur : PersonnageAPointDeVie
     {
-        public int PtsDeVies { get; private set; }
-        /*public bool EstVivant
-        {
-            get { return PtsDeVies > 0; }
-        }*/
+        private int _PtsDeVies { get; set; }
 
         public Joueur(int points)
         {
-            PtsDeVies = points;
+            _PtsDeVies = points;
         }
 
         public void Attaque(MonstreFacile monstre)
@@ -213,11 +215,6 @@ namespace ActiviteOrienteObjet
             if (lanceJoueur >= lanceMonstre)
                 monstre.SubitDegats();
         }
-
-        /*public int LanceLeDe()
-        {
-            return De.LanceLeDe();
-        }*/
 
         public int LanceLeDe(int valeur)
         {
